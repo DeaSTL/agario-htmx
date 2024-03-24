@@ -1,0 +1,11 @@
+<style id="player-positions">
+  {{range .}}
+  #{{.ID}} {
+    left: {{.Pos.X}}px;
+    top: {{.Pos.Y}}px;
+    background-color: {{.Color}};
+    width: {{.Size}}px;
+    height: {{.Size}}px;
+  }
+  {{end}}
+</style>

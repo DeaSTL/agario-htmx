@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/ws.js"></script>
+    <title>HTMX - Agario</title>
+    <link href="css/style.css" rel="stylesheet" />
+    <style>
+      .grid {
+        position: absolute;
+        width: 10000px;
+        height: 10000px;
+        left: -5000px;
+        top: -5000px;
+        background-size: 50px 50px;
+        background-image: linear-gradient(to right, grey 1px, transparent 1px),
+          linear-gradient(to bottom, grey 1px, transparent 1px);
+        background-repeat: repeat;
+        transition: 300ms linear;
+      }
+      .blob {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background-color: #32a852;
+        border-radius: 50%;
+        animation: wiggle 5s infinite;
+        transition: 300ms linear;
+      }
+      .self {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        transition: 300ms linear;
+      }
+      @keyframes wiggle {
+        0%,
+        100% {
+          border-radius: 38% 62% 53% 47% / 41% 55% 45% 59%;
+        }
+        25% {
+          border-radius: 48% 52% 58% 42% / 49% 60% 40% 51%;
+        }
+        50% {
+          border-radius: 42% 58% 51% 49% / 55% 48% 52% 45%;
+        }
+        75% {
+          border-radius: 58% 42% 47% 53% / 51% 54% 46% 49%;
+        }
+      }
+    </style>
+  </head>
+  <body hx-ext="ws" ws-connect="/ws">
+    <div class="grid"></div>
+    <!-- Keys downs -->
+    <div
+      id="key-up-down"
+      hx-trigger="keydown[key=='w'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-down-down"
+      hx-trigger="keydown[key=='s'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-left-down"
+      hx-trigger="keydown[key=='a'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-right-down"
+      hx-trigger="keydown[key=='d'] from:document"
+      ws-send
+    ></div>
+    <!-- Keys ups -->
+
+    <div
+      id="key-up-up"
+      hx-trigger="keyup[key=='w'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-down-up"
+      hx-trigger="keyup[key=='s'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-left-up"
+      hx-trigger="keyup[key=='a'] from:document"
+      ws-send
+    ></div>
+    <div
+      id="key-right-up"
+      hx-trigger="keyup[key=='d'] from:document"
+      ws-send
+    ></div>
+
+    <span id="viewport-resize" hx-trigger="resize from:window" ws-send></span>
+
+    <style id="player-positions"></style>
+    <style id="self-position"></style>
+    <div class="blob self" id="self"></div>
+    <div id="screen"></div>
+  </body>
+</html>
