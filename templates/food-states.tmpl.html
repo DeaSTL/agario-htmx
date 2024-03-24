@@ -1,0 +1,9 @@
+<style id="food-states">
+  {{range .}}
+    {{if .Consumed}}
+      #{{.ID}} {
+        display: none
+      }
+    {{end}}
+  {{end}}
+</style>

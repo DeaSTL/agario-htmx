@@ -1,5 +1,7 @@
 <div id="screen">
   {{range .}}
-  <div class="blob" id="{{.ID}}"></div>
+  <div class="blob" id="{{.ID}}">
+    <span class="blob-username">{{.Username}}</span>
+  </div>
   {{end}}
 </div>

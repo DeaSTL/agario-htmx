@@ -3,9 +3,16 @@
     background-color: {{.Color}};
     width: {{.Size}}px;
     height: {{.Size}}px;
+    left: {{.Viewport.Center.X}};
+    top: {{.Viewport.Center.Y}};
+  }
+  .game-world {
+    transform: translate({{.Viewport.WorldOffset.X}}px,{{.Viewport.WorldOffset.Y}}px);
   }
   .grid {
-    left: {{.Pos.X}}px;
-    top: {{.Pos.Y}}px;
+    transform: translate({{.Viewport.WorldOffset.X}}px,{{.Viewport.WorldOffset.Y}}px);
+  }
+  #{{.ID}} {
+    display: none;
   }
 </style>

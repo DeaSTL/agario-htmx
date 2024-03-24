@@ -12,12 +12,14 @@
         position: absolute;
         width: 10000px;
         height: 10000px;
-        left: -5000px;
-        top: -5000px;
         background-size: 50px 50px;
-        background-image: linear-gradient(to right, grey 1px, transparent 1px),
-          linear-gradient(to bottom, grey 1px, transparent 1px);
+        background-image: linear-gradient(to right, grey 4px, transparent 4px),
+          linear-gradient(to bottom, grey 4px, transparent 4px);
         background-repeat: repeat;
+        transition: 300ms linear;
+      }
+      .game-world {
+        position: absolute;
         transition: 300ms linear;
       }
       .blob {
@@ -29,12 +31,30 @@
         animation: wiggle 5s infinite;
         transition: 300ms linear;
       }
-      .self {
+      .blob-username {
+        text-align: center;
         position: absolute;
-        left: 50%;
-        top: 50%;
+        left:50%;
+        top:50%;
+        transform: translate(-50%,-50%);
+        font-size: 20px;
+        font-weight: 900;
+        -webkit-text-stroke-width: 1px;
+        -webkit-text-stroke-color: white;
+      }
+      .self {
+        z-index: 10;
+        position: absolute;
+        left: 50vw;
+        top: 50vh;
         transform: translate(-50%, -50%);
         transition: 300ms linear;
+      }
+      .food {
+        border-radius: 50%;
+        position: absolute;
+        width: 20px;
+        height: 20px;
       }
       @keyframes wiggle {
         0%,
@@ -51,11 +71,35 @@
           border-radius: 58% 42% 47% 53% / 51% 54% 46% 49%;
         }
       }
+      body {
+        font-family: Helvetica, Sans-Serif;
+        overflow: hidden;
+      }
     </style>
+    <script>
+      var screen = {
+        width: 0,
+        height: 0,
+      };
+      var resize_event = new Event("viewport-resize");
+      document.addEventListener("resize", (e) => {
+        screen.width = document.documentElement["clientWidth"];
+        screen.height = document.documentElement["clientHeight"];
+        document.dispatchEvent(resize_event);
+      });
+      window.addEventListener("load", (e) => {
+        screen.width = document.documentElement["clientWidth"];
+        screen.height = document.documentElement["clientHeight"];
+        document.dispatchEvent(resize_event);
+      });
+    </script>
   </head>
   <body hx-ext="ws" ws-connect="/ws">
     <div class="grid"></div>
+    <span id="viewport-resize" hx-vals="js:{screen}" hx-trigger="viewport-resize from:document" ws-send>
+
     <!-- Keys downs -->
+
     <div
       id="key-up-down"
       hx-trigger="keydown[key=='w'] from:document"
@@ -99,11 +143,14 @@
       ws-send
     ></div>
 
-    <span id="viewport-resize" hx-trigger="resize from:window" ws-send></span>
 
-    <style id="player-positions"></style>
     <style id="self-position"></style>
     <div class="blob self" id="self"></div>
-    <div id="screen"></div>
+
+    <style id="player-positions"></style>
+    <div class="game-world">
+      <div id="food"></div>
+      <div id="screen"></div>
+    </div>
   </body>
 </html>

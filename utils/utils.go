@@ -73,3 +73,12 @@ func GenerateRandomHexColor() string {
 	r, g, b := HSVToRGB(hue, saturation, brightness)
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }
+
+func Filter[T any](ss []T, test func(T) bool) (ret []T) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
+}
