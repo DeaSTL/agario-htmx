@@ -80,6 +80,21 @@ func (s *Server) New(path string) {
 				for _, food := range s.Food {
 					if player.Collider.IsColliding(&food.Collider) && !food.Consumed {
 						food.Consume(player, s)
+						s.sendFoodStates()
+					}
+				}
+
+				for _, other_player := range s.Players {
+					if player.ID != other_player.ID {
+						if player.Collider.IsColliding(&other_player.Collider) {
+							if player.EatPower < other_player.EatPower {
+								other_player.Size += other_player.EatPower
+								player.Size -= other_player.EatPower
+							} else {
+								player.Size += player.EatPower
+								other_player.Size -= other_player.EatPower
+							}
+						}
 					}
 				}
 			}
@@ -103,6 +118,10 @@ func (s *Server) updatePlayerGlobs(player *Player) {
 
 func (s *Server) sendFood() {
 	s.BroadcastTemplate("food.tmpl.html", s.Food)
+}
+
+func (s *Server) sendFoodStates() {
+	s.BroadcastTemplate("food-states.tmpl.html", s.Food)
 }
 
 func (s *Server) sendPlayerPositions(player *Player) {
@@ -148,6 +167,7 @@ func (s *Server) NewConnection(conn *websocket.Conn) {
 	s.updatePlayerGlobs(&new_player)
 	s.sendPlayerPositions(&new_player)
 	s.sendFood()
+	s.sendFoodStates()
 	new_player.sendPlayer(s)
 	new_player.sendPostion(s)
 

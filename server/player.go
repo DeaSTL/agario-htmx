@@ -45,7 +45,8 @@ type Player struct {
 	ID       string
 	Username string
 	Color    string
-	Size     int
+	Size     float64
+	EatPower float64
 	Ctl      Controls
 	Viewport Viewport
 	Conn     *websocket.Conn
@@ -105,6 +106,8 @@ func (p *Player) update(delta int64) {
 
 	p.Collider.Width = float64(p.Size)
 	p.Collider.Height = float64(p.Size)
+
+	p.EatPower = float64(p.Size) / 500
 }
 
 func (p *Player) sendPlayer(s *Server) {

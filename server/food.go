@@ -1,6 +1,10 @@
 package server
 
-import "jmhart.dev/htmx-argio/physics"
+import (
+	"time"
+
+	"jmhart.dev/htmx-argio/physics"
+)
 
 type Food struct {
 	ID       string
@@ -20,8 +24,11 @@ func (f *Food) New() {
 }
 
 func (f *Food) Consume(player *Player, server *Server) {
-	player.Size += 20
+	player.Size += 5
 	f.Consumed = true
 
-	server.BroadcastTemplate("food-item.tmpl.html", f)
+	go func(f *Food) {
+		time.Sleep(time.Minute * 1)
+		f.Consumed = false
+	}(f)
 }

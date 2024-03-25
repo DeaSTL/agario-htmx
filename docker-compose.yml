@@ -4,6 +4,7 @@ version: "3"
 
 services:
   app:
+    image: jhartway99/htmx-agario
     develop:
       watch:
         - action: rebuild
