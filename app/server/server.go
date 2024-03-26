@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"html/template"
 	"log"
@@ -36,8 +35,9 @@ type Screen struct {
 }
 
 type RawRequest struct {
-	Headers Request `json:"HEADERS"`
-	Screen  Screen  `json:"screen"`
+	Headers  Request `json:"HEADERS"`
+	Screen   Screen  `json:"screen"`
+	Username string  `json:"username"`
 }
 
 type Server struct {
@@ -64,7 +64,10 @@ func (s *Server) New(path string) {
 		new_food := Food{
 			ID:    id,
 			Color: utils.GenerateRandomHexColor(),
-			Pos:   physics.Vec2f{X: rand.Float64() * float64(GridWidth), Y: rand.Float64() * float64(GridHeight)},
+			Pos: physics.Vec2f{
+				X: rand.Float64() * float64(GridWidth),
+				Y: rand.Float64() * float64(GridHeight),
+			},
 		}
 		new_food.New()
 		s.Food[id] = &new_food
@@ -74,28 +77,34 @@ func (s *Server) New(path string) {
 		var delta int64
 		for {
 			startTime := time.Now()
-			for _, player := range s.Players {
-				player.update(delta)
-				player.sendPostion(s)
-				for _, food := range s.Food {
-					if player.Collider.IsColliding(&food.Collider) && !food.Consumed {
-						food.Consume(player, s)
-						s.sendFoodStates()
+			for index, player := range s.Players {
+				if !player.Dead {
+					player.update(delta)
+					player.sendPostion(s)
+					for _, food := range s.Food {
+						if player.Collider.IsColliding(&food.Collider) && !food.Consumed {
+							food.Consume(player, s)
+							s.sendFoodStates()
+						}
 					}
-				}
 
-				for _, other_player := range s.Players {
-					if player.ID != other_player.ID {
-						if player.Collider.IsColliding(&other_player.Collider) {
-							if player.EatPower < other_player.EatPower {
-								other_player.Size += other_player.EatPower
-								player.Size -= other_player.EatPower
-							} else {
-								player.Size += player.EatPower
-								other_player.Size -= other_player.EatPower
+					for _, other_player := range s.Players {
+						if player.ID != other_player.ID {
+							if player.Collider.IsColliding(&other_player.Collider) {
+								if player.EatPower < other_player.EatPower {
+									other_player.Size += other_player.EatPower
+									player.Size -= other_player.EatPower
+								} else {
+									player.Size += player.EatPower
+									other_player.Size -= other_player.EatPower
+								}
 							}
 						}
 					}
+				} else {
+					player.sendDeadScreen(s)
+					player.Conn.Close()
+					delete(s.Players, index)
 				}
 			}
 			s.sendPlayerPositions(nil)
@@ -107,13 +116,7 @@ func (s *Server) New(path string) {
 }
 
 func (s *Server) updatePlayerGlobs(player *Player) {
-	var buf bytes.Buffer
-	writer := &buf
-
-	s.Templates.ExecuteTemplate(writer, "players.tmpl.html", s.Players)
-	s.Broadcast(
-		websocket.TextMessage,
-		string(buf.Bytes()))
+	s.BroadcastTemplate("players.tmpl.html", s.Players)
 }
 
 func (s *Server) sendFood() {
@@ -152,6 +155,17 @@ func (s *Server) handleMessage(req *RawRequest, player *Player) {
 		player.Viewport.Width = req.Screen.Width
 		player.Viewport.Height = req.Screen.Height
 		s.sendPlayerPositions(nil)
+	case "init":
+		if len(req.Username) != 0 {
+			player.Username = req.Username
+		}
+		player.sendRenderer(s)
+		s.updatePlayerGlobs(player)
+		s.sendPlayerPositions(player)
+		s.sendFood()
+		s.sendFoodStates()
+		player.sendPlayer(s)
+		player.sendPostion(s)
 	}
 }
 
@@ -163,13 +177,6 @@ func (s *Server) NewConnection(conn *websocket.Conn) {
 	new_player.Pos.Y = (rand.Float64() - 0.5) * 400
 	s.Players[id] = &new_player
 	conn.SetCloseHandler(s.LostConnectionHandler(&new_player))
-
-	s.updatePlayerGlobs(&new_player)
-	s.sendPlayerPositions(&new_player)
-	s.sendFood()
-	s.sendFoodStates()
-	new_player.sendPlayer(s)
-	new_player.sendPostion(s)
 
 	go func(player *Player) {
 
@@ -211,7 +218,9 @@ func (s *Server) BroadcastTemplate(template string, data any) {
 
 func (s Server) Broadcast(messageType int, message string) {
 	for _, player := range s.Players {
+		player.Lock()
 		err := player.Conn.WriteMessage(messageType, []byte(message))
+		player.Unlock()
 		if err != nil {
 			log.Printf("Error broadcasting %+v", err)
 		}

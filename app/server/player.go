@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"log"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"jmhart.dev/htmx-argio/physics"
@@ -44,8 +45,10 @@ func (v *Viewport) PlayerAbsolute() physics.Vec2f {
 type Player struct {
 	ID       string
 	Username string
+	Dead     bool
 	Color    string
 	Size     float64
+	FontSize float64
 	EatPower float64
 	Ctl      Controls
 	Viewport Viewport
@@ -53,6 +56,7 @@ type Player struct {
 	Vel      physics.Vec2f
 	Pos      physics.Vec2f
 	Collider physics.Collider
+	sync.Mutex
 }
 
 func (p *Player) New(conn *websocket.Conn, id string) {
@@ -71,9 +75,11 @@ func (p *Player) SendTemplate(s *Server, template string, data any) error {
 	if err != nil {
 		return err
 	}
+	p.Lock()
 	p.Conn.WriteMessage(
 		websocket.TextMessage,
 		buf.Bytes())
+	p.Unlock()
 	return nil
 }
 
@@ -101,17 +107,30 @@ func (p *Player) update(delta int64) {
 	p.Pos = p.Viewport.PlayerAbsolute()
 	p.Pos.SubF(float64(p.Size / 2))
 
-	p.Collider.X = p.Pos.X
-	p.Collider.Y = p.Pos.Y
+	p.Collider.X = p.Pos.X + ((p.Size * 0.50) / 2)
+	p.Collider.Y = p.Pos.Y + ((p.Size * 0.50) / 2)
 
-	p.Collider.Width = float64(p.Size)
-	p.Collider.Height = float64(p.Size)
+	p.Collider.Width = float64(p.Size * 0.50)
+	p.Collider.Height = float64(p.Size * 0.50)
 
 	p.EatPower = float64(p.Size) / 500
+
+	if p.Size < 30 {
+		p.Dead = true
+	}
+
+	p.FontSize = p.Size * 0.25
 }
 
 func (p *Player) sendPlayer(s *Server) {
 	p.SendTemplate(s, "self.tmpl.html", p)
+}
+
+func (p *Player) sendRenderer(s *Server) {
+	p.SendTemplate(s, "renderer.tmpl.html", nil)
+}
+func (p *Player) sendDeadScreen(s *Server) {
+	p.SendTemplate(s, "dead-screen.tmpl.html", nil)
 }
 
 func (p *Player) sendPostion(s *Server) {

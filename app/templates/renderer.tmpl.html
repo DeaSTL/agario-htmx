@@ -1,0 +1,59 @@
+<div id="renderer">
+  <div class="grid"></div>
+
+    <!-- Keys downs -->
+
+    <div
+      id="key-up-down"
+      hx-trigger="keydown[key=='w'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-down-down"
+      hx-trigger="keydown[key=='s'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-left-down"
+      hx-trigger="keydown[key=='a'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-right-down"
+      hx-trigger="keydown[key=='d'] from:document"
+      ws-send
+      ></div>
+    <!-- Keys ups -->
+
+    <div
+      id="key-up-up"
+      hx-trigger="keyup[key=='w'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-down-up"
+      hx-trigger="keyup[key=='s'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-left-up"
+      hx-trigger="keyup[key=='a'] from:document"
+      ws-send
+      ></div>
+    <div
+      id="key-right-up"
+      hx-trigger="keyup[key=='d'] from:document"
+      ws-send
+      ></div>
+
+
+    <style id="self-position"></style>
+    <style id="food-states"></style>
+    <div class="blob self" id="self"></div>
+
+    <style id="player-positions"></style>
+    <div class="game-world">
+      <div id="food"></div>
+      <div id="screen"></div>
+    </div>
+</div>

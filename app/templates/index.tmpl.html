@@ -24,8 +24,8 @@
       }
       .blob {
         position: absolute;
-        width: 300px;
-        height: 300px;
+        width: 0px;
+        height: 0px;
         background-color: #32a852;
         border-radius: 50%;
         animation: wiggle 5s infinite;
@@ -34,10 +34,9 @@
       .blob-username {
         text-align: center;
         position: absolute;
-        left:50%;
-        top:50%;
-        transform: translate(-50%,-50%);
-        font-size: 20px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
         font-weight: 900;
         -webkit-text-stroke-width: 1px;
         -webkit-text-stroke-color: white;
@@ -75,83 +74,75 @@
         font-family: Helvetica, Sans-Serif;
         overflow: hidden;
       }
+    .hidden {
+      display: none;
+    }
+    .start-screen-modal {
+      position: absolute;
+      text-align: center;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    ul {
+      list-style: none;
+      list-style-position: outside;
+    }
     </style>
     <script>
       var screen = {
         width: 0,
         height: 0,
       };
-      var resize_event = new Event("viewport-resize");
-      document.addEventListener("resize", (e) => {
+      window.addEventListener("resize", (e) => {
         screen.width = document.documentElement["clientWidth"];
         screen.height = document.documentElement["clientHeight"];
-        document.dispatchEvent(resize_event);
+        document.dispatchEvent(new Event("viewport-resize"));
       });
       window.addEventListener("load", (e) => {
         screen.width = document.documentElement["clientWidth"];
         screen.height = document.documentElement["clientHeight"];
-        document.dispatchEvent(resize_event);
+        document.dispatchEvent(new Event("viewport-resize"));
       });
     </script>
+    <body hx-ext="ws" ws-connect="/ws">
+      <span id="viewport-resize" hx-vals="js:{screen}" hx-trigger="viewport-resize from:document" ws-send>
+      <form 
+        hx-on::ws-after-send="htmx.toggleClass(this,'hidden')" 
+        class="start-screen-modal"
+        id="init" 
+        hx-trigger="submit" 
+        hx-swap="innerHTML" 
+        ws-send>
+
+        <h1>
+          HTMX - Agario
+        </h1>
+          
+        <input
+          on:htmx:afterSettle="htmx.toggleClass(htmx.find('#init'),'hidden')"
+          name="username"
+          id="init"
+          type="text"
+          placeholder="Username"
+          hx-trigger="keydown[key=='Enter']"
+          hx-swap="innerHTML"
+          ws-send
+        />
+        <h4>
+          Keys: 
+        </h4>
+        <p> W -> up</p>
+        <p> A -> left</p>
+        <p> S -> down</p>
+        <p> D -> right</p>
+        <p>
+          <strong>Be sure to prime your keys by cylcing through WASD</strong>
+        </p>
+        <p>Use your browser's zoom to zoom in and out. Typically it's ctl+scroll or cmd+scroll</p>
+        <button type="submit">Start</button>
+      </form>
+      <div id="renderer" ></div>
+    </body>
   </head>
-  <body hx-ext="ws" ws-connect="/ws">
-    <div class="grid"></div>
-    <span id="viewport-resize" hx-vals="js:{screen}" hx-trigger="viewport-resize from:document" ws-send>
-
-    <!-- Keys downs -->
-
-    <div
-      id="key-up-down"
-      hx-trigger="keydown[key=='w'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-down-down"
-      hx-trigger="keydown[key=='s'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-left-down"
-      hx-trigger="keydown[key=='a'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-right-down"
-      hx-trigger="keydown[key=='d'] from:document"
-      ws-send
-    ></div>
-    <!-- Keys ups -->
-
-    <div
-      id="key-up-up"
-      hx-trigger="keyup[key=='w'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-down-up"
-      hx-trigger="keyup[key=='s'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-left-up"
-      hx-trigger="keyup[key=='a'] from:document"
-      ws-send
-    ></div>
-    <div
-      id="key-right-up"
-      hx-trigger="keyup[key=='d'] from:document"
-      ws-send
-    ></div>
-
-
-    <style id="self-position"></style>
-    <style id="food-states"></style>
-    <div class="blob self" id="self"></div>
-
-    <style id="player-positions"></style>
-    <div class="game-world">
-      <div id="food"></div>
-      <div id="screen"></div>
-    </div>
-  </body>
 </html>

@@ -1,0 +1,17 @@
+<div id="renderer">
+  <style>
+    .dead-modal {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .youre-dead-header {
+      text-align: center;
+    }
+  </style>
+  <div class="dead-modal">
+    <h1 class="youre-dead-header">You died!</h1>
+    <button hx-on:click="document.location='/'">Restart</button>
+  </div>
+</div>
