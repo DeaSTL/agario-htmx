@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://unpkg.com/htmx.org@1.9.11"></script>
@@ -106,6 +109,9 @@
       });
     </script>
     <body hx-ext="ws" ws-connect="/ws">
+      <a class="github-fork-ribbon" href="https://github.com/DeaSTL/agario-htmx" data-ribbon="Star this repo!" title="Star this repo!">Star this repo!</a>
+
+
       <span id="viewport-resize" hx-vals="js:{screen}" hx-trigger="viewport-resize from:document" ws-send>
       <form 
         hx-on::ws-after-send="htmx.toggleClass(this,'hidden')" 

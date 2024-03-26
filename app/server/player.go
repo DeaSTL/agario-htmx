@@ -10,7 +10,7 @@ import (
 	"jmhart.dev/htmx-argio/utils"
 )
 
-const move_speed float64 = 0.1
+var move_speed float64 = 0.1
 
 type Controls struct {
 	Up    bool
@@ -85,6 +85,8 @@ func (p *Player) SendTemplate(s *Server, template string, data any) error {
 
 func (p *Player) update(delta int64) {
 
+	move_speed = 1.0 / (p.Size * 0.075)
+
 	if p.Ctl.Up {
 		p.Vel.Y += move_speed * float64(delta)
 	}
@@ -98,6 +100,7 @@ func (p *Player) update(delta int64) {
 		p.Vel.X -= move_speed * float64(delta)
 	}
 
+	//Friction
 	p.Vel.MultF(0.80)
 
 	p.Vel.LimitF(30)
@@ -115,9 +118,15 @@ func (p *Player) update(delta int64) {
 
 	p.EatPower = float64(p.Size) / 500
 
-	if p.Size < 30 {
+	if p.Size < 40 {
 		p.Dead = true
 	}
+
+	if p.Size > 7000 {
+		p.Dead = true
+	}
+
+	p.Size -= 0.1
 
 	p.FontSize = p.Size * 0.25
 }
