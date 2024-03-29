@@ -59,7 +59,7 @@ func (s *Server) New(path string) {
 	s.Templates = template.New("")
 	s.Templates.ParseGlob("templates/*")
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1500; i++ {
 		id := "food_" + utils.GenID(64)
 		new_food := Food{
 			ID:    id,
@@ -78,34 +78,25 @@ func (s *Server) New(path string) {
 		for {
 			startTime := time.Now()
 			for index, player := range s.Players {
-				if !player.Dead {
+				if !player.Dead && player.Iinitialized {
 					player.update(delta)
 					player.sendPostion(s)
-					for _, food := range s.Food {
-						if player.Collider.IsColliding(&food.Collider) && !food.Consumed {
-							food.Consume(player, s)
-							s.sendFoodStates()
-						}
-					}
+					s.handleEatingFood(player)
 
-					for _, other_player := range s.Players {
-						if player.ID != other_player.ID {
-							if player.Collider.IsColliding(&other_player.Collider) {
-								if player.EatPower < other_player.EatPower {
-									other_player.Size += other_player.EatPower
-									player.Size -= other_player.EatPower
-								} else {
-									player.Size += player.EatPower
-									other_player.Size -= other_player.EatPower
-								}
-							}
-						}
-					}
-				} else {
-					player.sendDeadScreen(s)
-					player.Conn.Close()
-					delete(s.Players, index)
+					s.handlePlayerAttacks(player)
+
 				}
+
+				if player.Dead {
+					player.sendDeadScreen(s)
+					log.Printf("Player: %v died", player.ID)
+					player.Conn.Close()
+					//Really fuckin' sketch  but here we go
+					delete(s.Players, index)
+					continue
+
+				}
+				player.SendLeaderboard(s)
 			}
 			s.sendPlayerPositions(nil)
 			time.Sleep(time.Millisecond * 150)
@@ -113,6 +104,28 @@ func (s *Server) New(path string) {
 			delta = endTime.Sub(startTime).Milliseconds()
 		}
 	}(s)
+}
+
+func (s *Server) handleEatingFood(player *Player) {
+	for _, food := range s.Food {
+		if player.Collider.IsColliding(&food.Collider) && !food.Consumed {
+			food.Consume(player, s)
+			s.sendFoodStates()
+		}
+	}
+}
+
+func (s *Server) handlePlayerAttacks(player *Player) {
+	for _, other_player := range s.Players {
+		if player.ID != other_player.ID {
+			if player.Collider.IsColliding(&other_player.Collider) {
+				other_player.Size += other_player.EatPower
+				player.Size -= other_player.EatPower
+				player.Size += player.EatPower
+				other_player.Size -= other_player.EatPower
+			}
+		}
+	}
 }
 
 func (s *Server) updatePlayerGlobs(player *Player) {
@@ -135,30 +148,40 @@ func (s *Server) handleMessage(req *RawRequest, player *Player) {
 	switch req.Headers.Target {
 	// Key Ups
 	case "key-up-up":
-		player.Ctl.Up = true
+		player.Ctl.Up = false
+		break
 	case "key-down-up":
-		player.Ctl.Down = true
+		player.Ctl.Down = false
+		break
 	case "key-left-up":
-		player.Ctl.Left = true
+		player.Ctl.Left = false
+		break
 	case "key-right-up":
-		player.Ctl.Right = true
+		player.Ctl.Right = false
+		break
 		// Key downs
 	case "key-up-down":
-		player.Ctl.Up = false
+		player.Ctl.Up = true
+		break
 	case "key-down-down":
-		player.Ctl.Down = false
+		player.Ctl.Down = true
+		break
 	case "key-left-down":
-		player.Ctl.Left = false
+		player.Ctl.Left = true
+		break
 	case "key-right-down":
-		player.Ctl.Right = false
+		player.Ctl.Right = true
+		break
 	case "viewport-resize":
 		player.Viewport.Width = req.Screen.Width
 		player.Viewport.Height = req.Screen.Height
 		s.sendPlayerPositions(nil)
+		break
 	case "init":
 		if len(req.Username) != 0 {
-			player.Username = req.Username
+			player.Username = utils.LimitText(req.Username, 24)
 		}
+		player.Iinitialized = true
 		player.sendRenderer(s)
 		s.updatePlayerGlobs(player)
 		s.sendPlayerPositions(player)
@@ -166,6 +189,9 @@ func (s *Server) handleMessage(req *RawRequest, player *Player) {
 		s.sendFoodStates()
 		player.sendPlayer(s)
 		player.sendPostion(s)
+		break
+	default:
+		break
 	}
 }
 
@@ -173,9 +199,10 @@ func (s *Server) NewConnection(conn *websocket.Conn) {
 	id := "player_" + utils.GenID(16)
 	new_player := Player{}
 	new_player.New(conn, id)
-	new_player.Pos.X = (rand.Float64() - 0.5) * 400
-	new_player.Pos.Y = (rand.Float64() - 0.5) * 400
+	new_player.Viewport.Pos.X = float64(rand.Int() % GridWidth)
+	new_player.Viewport.Pos.Y = float64(rand.Int() % GridHeight)
 	s.Players[id] = &new_player
+	log.Printf("Player %v joined", new_player.ID)
 	conn.SetCloseHandler(s.LostConnectionHandler(&new_player))
 
 	go func(player *Player) {

@@ -17,6 +17,14 @@ func GenID(length int) string {
 	return string(b)
 }
 
+func LimitText(text string, length int) string {
+	if len(text) > length {
+		return text[:length]
+	} else {
+		return text
+	}
+}
+
 func HSVToRGB(h, s, v float64) (r, g, b uint8) {
 	var i int
 	var f, p, q, t float64

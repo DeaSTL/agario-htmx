@@ -8,6 +8,10 @@ import (
 
 var Server server.Server
 
+type indexData struct {
+	WsUrl string
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
 	Server.Templates.ExecuteTemplate(w, "index.tmpl.html", nil)
 }

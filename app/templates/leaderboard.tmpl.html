@@ -1,0 +1,22 @@
+<div id="leaderboard" class="leaderboard">
+  <table>
+    <tr>
+      <th></th>
+      <th>Username</th>
+      <th>Score</th>
+    </tr>
+    {{range .Top}}
+    <tr class="{{if eq $.Current.ID .ID }}current{{else}}top{{end}}">
+      <td>
+        <div class="player-color" style="background-color:{{.Color}}"></div>
+      </td>
+      <td>{{.Username}}</td>
+      <td>{{.Size}}</td>
+    </tr>
+    {{end}}
+  </table>
+
+  <div>
+    <h5>({{.Current.Pos.X}} , {{.Current.Pos.Y}})</h5>
+  </div>
+</div>

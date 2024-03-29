@@ -11,6 +11,38 @@
     <title>HTMX - Agario</title>
     <link href="css/style.css" rel="stylesheet" />
     <style>
+      .leaderboard {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: auto;
+        height: auto;
+        background-color: #fff;
+        padding: 5px;
+        border: 2px solid black;
+        border-radius: 4px;
+        z-index: 200;
+      }
+
+      .player-color {
+        position: absolute;
+        width: 0px;
+        height: 0px;
+        border-radius: 50%;
+        padding: 5px;
+        transform: translateY(-50%)
+      }
+
+      th {
+        min-width: 10px;
+      }
+      tr.top {
+        padding-left: 20px
+      }
+      tr.current{
+        color: red;
+        font-weight: 800;
+      }
       .grid {
         position: absolute;
         width: 10000px;
@@ -111,6 +143,8 @@
     <body hx-ext="ws" ws-connect="/ws">
       <a class="github-fork-ribbon" href="https://github.com/DeaSTL/agario-htmx" data-ribbon="Star this repo!" title="Star this repo!">Star this repo!</a>
 
+      <div id="leaderboard" class="leaderboard"></div>
+
 
       <span id="viewport-resize" hx-vals="js:{screen}" hx-trigger="viewport-resize from:document" ws-send>
       <form 
@@ -126,7 +160,7 @@
         </h1>
           
         <input
-          on:htmx:afterSettle="htmx.toggleClass(htmx.find('#init'),'hidden')"
+          hx-on::ws-after-send="htmx.toggleClass(htmx.find('.start-screen-modal'),'hidden')"
           name="username"
           id="init"
           type="text"
@@ -134,6 +168,7 @@
           hx-trigger="keydown[key=='Enter']"
           hx-swap="innerHTML"
           ws-send
+          maxlength="24"
         />
         <h4>
           Keys: 
@@ -142,10 +177,15 @@
         <p> A -> left</p>
         <p> S -> down</p>
         <p> D -> right</p>
-        <p>
-          <strong>Be sure to prime your keys by cylcing through WASD</strong>
-        </p>
         <p>Use your browser's zoom to zoom in and out. Typically it's ctl+scroll or cmd+scroll</p>
+        <h4>
+          How to play: 
+        </h4>
+        <p>The goal of this game is to be the biggest player on the grid by collecting food and taking mass from other players. You can take mass from other players by being bigger than them and colliding.</p>
+
+        <p>
+          Be sure to continuously eat food or risk dying from starvation. There is also such a thing as too big, when you reach a size of 7000 you will instantly die.
+        </p>
         <button type="submit">Start</button>
       </form>
       <div id="renderer" ></div>

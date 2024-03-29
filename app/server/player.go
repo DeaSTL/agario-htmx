@@ -3,6 +3,8 @@ package server
 import (
 	"bytes"
 	"log"
+	"math"
+	"sort"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -25,6 +27,11 @@ type Viewport struct {
 	Height int
 }
 
+type Leaderboard struct {
+	Top     []*Player
+	Current *Player
+}
+
 func (v *Viewport) Center() physics.Vec2f {
 	center := physics.Vec2f{X: float64(v.Width), Y: float64(v.Height)}
 	center.DivF(2)
@@ -43,29 +50,67 @@ func (v *Viewport) PlayerAbsolute() physics.Vec2f {
 }
 
 type Player struct {
-	ID       string
-	Username string
-	Dead     bool
-	Color    string
-	Size     float64
-	FontSize float64
-	EatPower float64
-	Ctl      Controls
-	Viewport Viewport
-	Conn     *websocket.Conn
-	Vel      physics.Vec2f
-	Pos      physics.Vec2f
-	Collider physics.Collider
+	ID           string
+	Username     string
+	Dead         bool
+	Iinitialized bool
+	Color        string
+	Size         float64
+	FontSize     float64
+	EatPower     float64
+	Ctl          Controls
+	Viewport     Viewport
+	Conn         *websocket.Conn
+	Vel          physics.Vec2f
+	Pos          physics.Vec2f
+	Collider     physics.Collider
 	sync.Mutex
 }
+
+type BySize []*Player
+
+func (a BySize) Len() int           { return len(a) }
+func (a BySize) Less(i, j int) bool { return a[i].Size > a[j].Size }
+func (a BySize) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func (p *Player) New(conn *websocket.Conn, id string) {
 	p.Conn = conn
 	p.ID = id
 	p.Size = 100
 	p.Color = utils.GenerateRandomHexColor()
-	p.Username = "really long username 1234"
-	p.Ctl = Controls{}
+	p.Username = "user_" + utils.GenID(6)
+	p.Ctl = Controls{
+		Left:  false,
+		Up:    false,
+		Right: false,
+		Down:  false,
+	}
+}
+
+func (p *Player) SendLeaderboard(s *Server) {
+
+	leaderboard := Leaderboard{
+		Current: p,
+		Top:     []*Player{},
+	}
+	for _, player := range s.Players {
+		if player.Iinitialized {
+			rounded_player := *player
+			rounded_player.Size = math.Round(rounded_player.Size)
+			leaderboard.Top = append(leaderboard.Top, &rounded_player)
+		}
+	}
+
+	rounded_current := *p
+	rounded_current.Size = math.Round(rounded_current.Size)
+	rounded_current.Pos.X = math.Round(rounded_current.Pos.X)
+	rounded_current.Pos.Y = math.Round(rounded_current.Pos.Y)
+
+	leaderboard.Current = &rounded_current
+
+	sort.Sort(BySize(leaderboard.Top))
+
+	p.SendTemplate(s, "leaderboard.tmpl.html", leaderboard)
 }
 
 func (p *Player) SendTemplate(s *Server, template string, data any) error {
@@ -85,19 +130,19 @@ func (p *Player) SendTemplate(s *Server, template string, data any) error {
 
 func (p *Player) update(delta int64) {
 
-	move_speed = 1.0 / (p.Size * 0.075)
+	move_speed = 1.0 / (p.Size * 0.035)
 
 	if p.Ctl.Up {
-		p.Vel.Y += move_speed * float64(delta)
-	}
-	if p.Ctl.Down {
 		p.Vel.Y -= move_speed * float64(delta)
 	}
+	if p.Ctl.Down {
+		p.Vel.Y += move_speed * float64(delta)
+	}
 	if p.Ctl.Left {
-		p.Vel.X += move_speed * float64(delta)
+		p.Vel.X -= move_speed * float64(delta)
 	}
 	if p.Ctl.Right {
-		p.Vel.X -= move_speed * float64(delta)
+		p.Vel.X += move_speed * float64(delta)
 	}
 
 	//Friction
@@ -116,7 +161,7 @@ func (p *Player) update(delta int64) {
 	p.Collider.Width = float64(p.Size * 0.50)
 	p.Collider.Height = float64(p.Size * 0.50)
 
-	p.EatPower = float64(p.Size) / 500
+	p.EatPower = float64(p.Size) / 200
 
 	if p.Size < 40 {
 		p.Dead = true
