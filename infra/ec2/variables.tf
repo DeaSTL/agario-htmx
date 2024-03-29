@@ -6,3 +6,10 @@ variable "ami" {
   type = string
 }
 
+variable "route_zone_id" {
+  type = string
+}
+
+variable "domain" {
+  type = string
+}

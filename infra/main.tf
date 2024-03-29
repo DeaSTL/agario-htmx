@@ -4,8 +4,10 @@ provider "aws" {
 
 module "ec2-east" {
    source = "./ec2"
-   name = "ec2-htmx-agario"
+   name = "htmx-agario"
    ami = "ami-07d9b9ddc6cd8dd30"
+   route_zone_id = "Z05859407AHEY4L0BH7B"
+   domain = "aws.jmhart.dev"
 }
 
 
